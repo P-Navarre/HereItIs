@@ -1,0 +1,19 @@
+/* 
+  Localizable.strings
+  HereItIs
+
+  Created by Pierre Navarre on 30/01/2023.
+  
+*/
+
+// ErrorView
+"Load_Error_Message" = "Une erreur s'est produite\n\nMerci de vérifier votre connexion et réessayer plus tard";
+"Load_Retry_Button" = "Réessayer";
+
+// AdCell
+"Ad_Cell_Is_Urgent" = "❗️";
+
+// DetailView
+"Detail_ID" = "ID: ";
+"Detail_Is_Urgent" = "❗️urgent";
+"Detail_SIRET" = "SIRET: ";
