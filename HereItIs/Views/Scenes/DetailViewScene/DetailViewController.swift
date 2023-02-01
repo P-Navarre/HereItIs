@@ -17,6 +17,7 @@ final class DetailViewController: UIViewController {
         static let horizontalMargin: CGFloat = 16
         static let verticalMargin: CGFloat = 12 // Between image and stackView
         static let stackViewVerticaleSpace : CGFloat = 8
+        static let lineHorizontalSpace: CGFloat = 4
     }
     
     // MARK: - Properties
@@ -86,6 +87,10 @@ private extension DetailViewController {
             background.topAnchor.constraint(equalTo: self.imageView.topAnchor),
             background.bottomAnchor.constraint(equalTo: self.imageView.bottomAnchor),
             
+            // scrollView contentSize width
+            background.leftAnchor.constraint(equalTo: self.scrollView.leftAnchor),
+            background.rightAnchor.constraint(equalTo: self.scrollView.rightAnchor),
+            
             self.imageView.topAnchor.constraint(equalTo: self.scrollView.topAnchor),
             self.imageView.centerXAnchor.constraint(equalTo: self.scrollView.centerXAnchor),
             self.imageView.widthAnchor.constraint(lessThanOrEqualTo: self.view.widthAnchor)
@@ -94,10 +99,10 @@ private extension DetailViewController {
     
     func layoutStackView() {
         var rows: [UIView] {[
-            UIStackView(arrangedSubviews: [self.categoryLabel, self.idLabel]),
+            self.newLine(arrangedSubviews: [self.categoryLabel, self.idLabel]),
             self.titleLabel,
             self.priceLabel,
-            UIStackView(arrangedSubviews: [self.dateLabel, self.urgentLabel]),
+            self.newLine(arrangedSubviews: [self.dateLabel, self.urgentLabel]),
             self.descriptiontLabel,
             self.sirettLabel
         ]}
@@ -116,9 +121,20 @@ private extension DetailViewController {
         ])
         
         self.idLabel.textAlignment = .right
+        self.idLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        self.idLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         self.titleLabel.numberOfLines = 0
         self.urgentLabel.textAlignment = .right
+        self.urgentLabel.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        self.urgentLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         self.descriptiontLabel.numberOfLines = 0
+    }
+    
+    func newLine(arrangedSubviews: [UIView]) -> UIStackView {
+        let line = UIStackView(arrangedSubviews: arrangedSubviews)
+        line.spacing = Constants.lineHorizontalSpace
+        line.alignment = .center
+        return line
     }
 }
 
@@ -126,7 +142,7 @@ private extension DetailViewController {
 extension DetailViewController: DetailViewControllerInput {
     func showContent(_ model: DetailViewModel) {
         self.imageView.placeHolder = model.placeHolder.image
-        self.imageView.loadImage(from: model.imageUrl)
+        Task { await self.imageView.loadImage(from: model.imageUrl) }
         self.categoryLabel.attributedText = model.category
         self.idLabel.attributedText = model.id
         self.titleLabel.attributedText = model.title

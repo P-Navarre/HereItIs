@@ -8,11 +8,13 @@
 import UIKit
 
 protocol ListViewPresenterInput {
-    func willStartLoading()
-    func showAds(_ ads: [ClassifiedAd], categories: [Int64: String])
-    func showError(_ error: Error, retryHandler: @escaping ()->Void)
-    func presentDetail(for ad: ClassifiedAd, category: String?)
+    func willStartLoading() async
+    func showAds(_ ads: [ClassifiedAd], categories: [Int64: String]) async
+    func showError(_ error: Error, retryHandler: @escaping ()->Void) async
+    func presentDetail(for ad: ClassifiedAd, category: String?) async
+    // methods are async for unit test purpose
 }
+
 
 final class ListViewPresenter {
     private weak var viewController: ListViewControllerInput?
@@ -24,28 +26,28 @@ final class ListViewPresenter {
 
 // MARK: - ListViewPresenterInput
 extension ListViewPresenter: ListViewPresenterInput {
-    func willStartLoading() {
-        Task { @MainActor in
+    func willStartLoading() async {
+        await MainActor.run {
             self.viewController?.showError(nil)
             self.viewController?.showLoader(true)
         }
     }
     
-    func showAds(_ ads: [ClassifiedAd], categories: [Int64: String]) {
+    func showAds(_ ads: [ClassifiedAd], categories: [Int64: String]) async {
         let style = AdCellStyle()
     
         let model = ads.map({ ad in
             self.cellModel(for: ad, categories: categories, style: style)
         })
         
-        Task { @MainActor in
+        await MainActor.run {
             self.viewController?.showError(nil)
             self.viewController?.showLoader(false)
             self.viewController?.showContent(model)
         }
     }
     
-    func showError(_ error: Error, retryHandler: @escaping ()->Void) {
+    func showError(_ error: Error, retryHandler: @escaping ()->Void) async {
         let style = ErrorViewStyle()
         
         let model = ErrorViewModel(
@@ -57,20 +59,22 @@ extension ListViewPresenter: ListViewPresenterInput {
             retryHandler: retryHandler
         )
         
-        Task { @MainActor in
+        await MainActor.run {
             self.viewController?.showError(nil)
             self.viewController?.showLoader(false)
             self.viewController?.showError(model)
         }
     }
-    
-    func presentDetail(for ad: ClassifiedAd, category: String?) {
-        Task {  @MainActor in self.viewController?.presentDetail(for: ad, category: category) }
+
+    func presentDetail(for ad: ClassifiedAd, category: String?) async {
+        await MainActor.run {
+            self.viewController?.presentDetail(for: ad, category: category)
+        }
     }
 }
 
 // MARK: - AdCellStyle
-private extension ListViewPresenter {
+extension ListViewPresenter {
     
     struct AdCellStyle {
         let priceFormatter: NumberFormatter
@@ -92,12 +96,12 @@ private extension ListViewPresenter {
                 
             ]
             self.titleAttributes = [.font: Style.Font.medium.withSize(17)]
-            self.priceAttributes = [.font: Style.Font.medium.withSize(15)]
+            self.priceAttributes = [.font: Style.Font.medium.withSize(16)]
             self.isUrgentAttributes = [.font: Style.Font.medium.withSize(17)]
         }
     }
     
-    func cellModel(for ad: ClassifiedAd, categories: [Int64: String], style: AdCellStyle) -> AdCellModel {
+    private func cellModel(for ad: ClassifiedAd, categories: [Int64: String], style: AdCellStyle) -> AdCellModel {
         let category = NSAttributedString(
             string: String(categories[ad.categoryId] ?? ""),
             attributes: style.categoryAttributes
@@ -110,7 +114,7 @@ private extension ListViewPresenter {
         
         let price = NSAttributedString(
             string: style.priceFormatter.string(from: NSNumber(value: ad.price)) ?? "",
-            attributes: style.titleAttributes
+            attributes: style.priceAttributes
         )
         
         let isUrgent = NSAttributedString(
@@ -126,7 +130,7 @@ private extension ListViewPresenter {
 }
 
 // MARK: - ErrorViewStyle
-private extension ListViewPresenter {
+extension ListViewPresenter {
     struct ErrorViewStyle {
         let messageAttributes: [NSAttributedString.Key : Any]
         let buttonBackgroundColor: UIColor = Style.Color.brand.color

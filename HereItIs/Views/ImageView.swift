@@ -22,15 +22,13 @@ final class ImageView: UIImageView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func loadImage(from url: URL?) {
+    func loadImage(from url: URL?) async {
         self.url = url
         self.image = self.placeHolder
         guard let url = url else { return }
-        Task { [weak self] in
-            let image = try await self?.imageLoader.image(from: url)
-            guard url == self?.url, // Check that the url has not been modified
-                  let image = image else { return }
-            self?.image = image
-        }
+        let image = try? await self.imageLoader.image(from: url)
+        guard url == self.url, // Check that the url has not been modified
+              let image = image else { return }
+        self.image = image
     }
 }

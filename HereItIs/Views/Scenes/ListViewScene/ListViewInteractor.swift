@@ -17,9 +17,9 @@ actor ListViewInteractor {
     
     // MARK: - Properties
     private let presenter: ListViewPresenterInput
-    private let imageLoader: ImageLoaderProtocol
     private let api: APIProtocol
-    
+    private let imageLoader: ImageLoaderProtocol
+
     private var ads: [ClassifiedAd]?
     private var categories: [Int64: String]?
     
@@ -27,8 +27,8 @@ actor ListViewInteractor {
     init(
         presenter: ListViewPresenterInput,
         // For unit testing purpose managers can be set at initialization time
-        imageLoader: ImageLoaderProtocol = ImageLoader.shared,
-        api: APIProtocol = DefaultAPIWrapper.shated
+        api: APIProtocol = DefaultAPIWrapper.shated,
+        imageLoader: ImageLoaderProtocol = ImageLoader.shared
     ) {
         self.presenter = presenter
         self.imageLoader = imageLoader
@@ -40,53 +40,51 @@ actor ListViewInteractor {
 // MARK: - ListViewInteractorInput
 extension ListViewInteractor: ListViewInteractorInput {
     
-    func loaadData() {
-        self.presenter.willStartLoading()
-        Task {
-            do {
-                async let categoriesResponse = self.api.getCategories()
-                async let listingResponse = self.api.getListing()
-                
-                let categoriesList = try await categoriesResponse.body
-                let categories: [Int64: String] = Dictionary(
-                    uniqueKeysWithValues: categoriesList.map { ($0.id, $0.name) }
-                )
-                self.categories = categories
-                
-                let ads = try await listingResponse.body
-                self.ads = ads
-                
-                self.presenter.showAds(ads, categories: categories)
-            } catch let error {
-                let retry: ()->Void = {
-                    Task { [weak self] in
-                        await self?.loaadData()
-                    }
+    func loaadData() async {
+        await self.presenter.willStartLoading()
+        
+        do {
+            async let categoriesResponse = self.api.getCategories()
+            async let listingResponse = self.api.getListing()
+            
+            let categoriesList = try await categoriesResponse.body
+            let categories: [Int64: String] = Dictionary(
+                uniqueKeysWithValues: categoriesList.map { ($0.id, $0.name) }
+            )
+            self.categories = categories
+            
+            let ads = try await listingResponse.body
+            self.ads = ads
+            
+            await self.presenter.showAds(ads, categories: categories)
+        } catch let error {
+            let retry: ()->Void = {
+                Task { [weak self] in
+                    await self?.loaadData()
                 }
-                self.presenter.showError(error, retryHandler: retry)
             }
+            await self.presenter.showError(error, retryHandler: retry)
         }
+        
     }
     
-    func prefetchItems(at indexPaths: [IndexPath]) {
+    func prefetchItems(at indexPaths: [IndexPath]) async {
         let urls: [URL] = indexPaths.compactMap { indexPath in
             self.ads?[indexPath.row].imagesUrl.small?.url
         }
-        
-        Task {
-            await withTaskGroup(of: Void.self, body: { group in
-                urls.forEach { url in
-                    group.addTask {
-                        await self.imageLoader.cacheImage(from: url)
-                    }
+    
+        await withTaskGroup(of: Void.self, body: { group in
+            urls.forEach { url in
+                group.addTask {
+                    await self.imageLoader.cacheImage(from: url)
                 }
-            })
-        }
+            }
+        })
     }
     
-    func didSelectItem(at indexPath: IndexPath) {
+    func didSelectItem(at indexPath: IndexPath) async {
         guard let ad = self.ads?[indexPath.row] else { return }
         let category = self.categories?[ad.categoryId]
-        self.presenter.presentDetail(for: ad, category: category)
+        await self.presenter.presentDetail(for: ad, category: category)
     }
 }

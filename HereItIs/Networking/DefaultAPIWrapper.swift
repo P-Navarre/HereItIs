@@ -27,6 +27,9 @@ struct DefaultAPIWrapper: APIProtocol {
     
 }
 
+// Needed to avoid type mismatches in unit tests
+typealias AdCategory = Category
+
 private extension RequestBuilder {
     func asyncExecute(_ apiResponseQueue: DispatchQueue = OpenAPIClientAPI.apiResponseQueue) async throws -> Response<T> {
         return try await withCheckedThrowingContinuation { continuation in

@@ -8,7 +8,7 @@
 import UIKit
 
 // Protocol definition for the class responsible for loading and caching image data
-protocol ImageLoaderProtocol: AnyObject {
+protocol ImageLoaderProtocol: AnyActor {
     func cacheImage(from url: URL) async
     func image(from url: URL) async throws -> UIImage?
 }

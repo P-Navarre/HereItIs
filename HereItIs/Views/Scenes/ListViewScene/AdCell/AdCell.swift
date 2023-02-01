@@ -60,6 +60,7 @@ class AdCell: UICollectionViewCell {
         
         let title = UILabel()
         title.numberOfLines = 0
+        title.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
         self.contentView.addSubview(title)
         title.translatesAutoresizingMaskIntoConstraints = false
         self.titleLabel = title
@@ -88,7 +89,8 @@ class AdCell: UICollectionViewCell {
             urgent.centerYAnchor.constraint(equalTo: category.centerYAnchor),
 
             price.leadingAnchor.constraint(equalTo: title.leadingAnchor),
-            price.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8)
+            price.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
+            price.bottomAnchor.constraint(lessThanOrEqualTo: self.imageView.bottomAnchor)
         ])
         
         self.contentView.backgroundColor = Style.Color.adCellBackground.color
@@ -97,7 +99,7 @@ class AdCell: UICollectionViewCell {
     
     func update(with model: AdCellModel) {
         self.imageView.placeHolder = model.placeHolder.image
-        self.imageView.loadImage(from: model.imageUrl)
+        Task { await self.imageView.loadImage(from: model.imageUrl) }
         self.categoryLabel.attributedText = model.category
         self.titleLabel.attributedText = model.title
         self.priceLabel.attributedText = model.price
