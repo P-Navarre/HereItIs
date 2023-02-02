@@ -98,17 +98,17 @@ final class ListViewInteractorTests: XCTestCase {
         await self.interactorUnderTesting.loaadData()
         
         let prefetchCount: Int = ads.isEmpty ? 0 : (0..<ads.count).randomElement()!
-        let indexPaths = (0..<prefetchCount).map { index in
-            IndexPath(row: index, section: 0)
+        let adIds = (0..<prefetchCount).map { index in
+            ads[index].id
         }
         
         // Act
-        await self.interactorUnderTesting.prefetchItems(at: indexPaths)
+        await self.interactorUnderTesting.prefetchItems(withIds: adIds)
         
         // Assert
-        let expectedUrls: [String] = indexPaths
-            .compactMap { path in
-                ads[path.row].imagesUrl.small?.url
+        let expectedUrls: [String] = adIds
+            .compactMap { id in
+                ads.first(where: { $0.id == id })?.imagesUrl.small?.url
             }.map { url in
                 url.absoluteString
             }.sorted()
@@ -139,7 +139,7 @@ final class ListViewInteractorTests: XCTestCase {
         guard let selected = (0..<ads.count).randomElement() else { return }
         
         // Act
-        await self.interactorUnderTesting.didSelectItem(at: IndexPath(row: selected, section: 0))
+        await self.interactorUnderTesting.didSelectItem(withId: ads[selected].id)
         
         // Assert
         XCTAssert(self.listViewPresenterSpy.invokedPresentDetail)

@@ -9,8 +9,8 @@ import Foundation
 
 protocol ListViewInteractorInput {
     func loaadData() async
-    func prefetchItems(at indexPaths: [IndexPath]) async
-    func didSelectItem(at indexPath: IndexPath) async
+    func prefetchItems(withIds adIds: [Int64]) async
+    func didSelectItem(withId adId: Int64) async
 }
 
 actor ListViewInteractor {
@@ -68,9 +68,13 @@ extension ListViewInteractor: ListViewInteractorInput {
         
     }
     
-    func prefetchItems(at indexPaths: [IndexPath]) async {
-        let urls: [URL] = indexPaths.compactMap { indexPath in
-            self.ads?[indexPath.row].imagesUrl.small?.url
+    func prefetchItems(withIds adIds: [Int64]) async {
+        let ads = adIds.compactMap { id in
+            self.ads?.first { $0.id == id }
+        }
+        
+        let urls: [URL] = ads.compactMap { ad in
+            ad.imagesUrl.small?.url
         }
     
         await withTaskGroup(of: Void.self, body: { group in
@@ -82,8 +86,8 @@ extension ListViewInteractor: ListViewInteractorInput {
         })
     }
     
-    func didSelectItem(at indexPath: IndexPath) async {
-        guard let ad = self.ads?[indexPath.row] else { return }
+    func didSelectItem(withId adId: Int64) async {
+        guard let ad = self.ads?.first(where: { $0.id == adId }) else { return }
         let category = self.categories?[ad.categoryId]
         await self.presenter.presentDetail(for: ad, category: category)
     }

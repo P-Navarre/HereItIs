@@ -14,4 +14,4 @@ En vous souhaitant une bonne découverte de ce petit projet que j'ai pris plaisi
 
 Pierre
 
-PS - La correction suivante devrait être apportée : lors d'une sélection sur ListViewController, le paramètre passé à l'interactor devrait être l'ID de l'ad, et non l'indexPath
+PS - La correction suivante a été apportée : lors d'une sélection sur ListViewController, le paramètre passé à l'interactor est l'id de l'ad, et non l'indexPath.

@@ -98,7 +98,8 @@ extension ListViewController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        Task { await self.interactor.didSelectItem(at: indexPath) }
+        let adId = self.models[indexPath.row].id
+        Task { await self.interactor.didSelectItem(withId: adId) }
     }
 }
 
@@ -129,7 +130,10 @@ extension ListViewController: UICollectionViewDelegateFlowLayout {
 // MARK: - UICollectionViewDataSourcePrefetching
 extension ListViewController: UICollectionViewDataSourcePrefetching {
     func collectionView(_ collectionView: UICollectionView, prefetchItemsAt indexPaths: [IndexPath]) {
-        Task { await self.interactor.prefetchItems(at: indexPaths) }
+        let adIds: [Int64] = indexPaths.map { indexPath in
+            self.models[indexPath.row].id
+        }
+        Task { await self.interactor.prefetchItems(withIds: adIds) }
     }
 }
 
